@@ -1,0 +1,16 @@
+(function () {
+  let tries = 0;
+
+  function ensureGuideOpen() {
+    const drawer = document.querySelector('tp-yt-app-drawer#guide');
+    const button = document.querySelector('#guide-button button');
+    if (!drawer || !button) return false;
+    if (!drawer.hasAttribute('opened')) button.click();
+    return true;
+  }
+
+  const timer = setInterval(() => {
+    tries++;
+    if (ensureGuideOpen() || tries > 40) clearInterval(timer);
+  }, 500);
+})();
