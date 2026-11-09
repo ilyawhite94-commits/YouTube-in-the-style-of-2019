@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube в стиле 2019
 // @namespace    https://github.com/ilyawhite94-commits
-// @version      1.0
+// @version      1.2
 // @description  Компактная главная YouTube: узкая колонка, мелкие заголовки, всегда открытая левая панель
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -75,6 +75,22 @@
     }
     ytd-guide-section-renderer {
       padding: 4px 0 !important;
+    }
+    
+    /* похожие видео на странице ролика */
+    ytd-watch-flexy ytd-compact-video-renderer,
+    ytd-watch-flexy yt-lockup-view-model {
+      max-width: 380px !important;
+    }
+    ytd-watch-flexy ytd-compact-video-renderer ytd-thumbnail,
+    ytd-watch-flexy yt-lockup-view-model .yt-lockup-view-model-wiz__content-image {
+      width: 140px !important;
+      min-width: 140px !important;
+    }
+    ytd-watch-flexy ytd-compact-video-renderer #video-title,
+    ytd-watch-flexy yt-lockup-view-model h3 {
+      font-size: 13px !important;
+      line-height: 1.3 !important;
     }
   `;
 
