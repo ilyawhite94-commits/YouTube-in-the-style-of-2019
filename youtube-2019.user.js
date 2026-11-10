@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube в стиле 2019
 // @namespace    https://github.com/ilyawhite94-commits
-// @version      1.2
+// @version      1.3
 // @description  Компактная главная YouTube: узкая колонка, мелкие заголовки, всегда открытая левая панель
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -13,7 +13,7 @@
 (function () {
   'use strict';
 
-  const ITEMS_PER_ROW = 5;      // сколько видео в ряду
+  const ITEMS_PER_ROW = 5;       // сколько видео в ряду
   const COLUMN_WIDTH = '1250px'; // ширина колонки ('none' = на весь экран)
 
   const css = `
@@ -76,7 +76,7 @@
     ytd-guide-section-renderer {
       padding: 4px 0 !important;
     }
-    
+
     /* похожие видео на странице ролика */
     ytd-watch-flexy ytd-compact-video-renderer,
     ytd-watch-flexy yt-lockup-view-model {
