@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube в стиле 2019
 // @namespace    https://github.com/ilyawhite94-commits
-// @version      1.3
+// @version      1.4
 // @description  Компактная главная YouTube: узкая колонка, мелкие заголовки, всегда открытая левая панель
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -15,6 +15,7 @@
 
   const ITEMS_PER_ROW = 5;       // сколько видео в ряду
   const COLUMN_WIDTH = '1250px'; // ширина колонки ('none' = на весь экран)
+  const RELATED_MIN_WIDTH = 220; // минимальная ширина карточки «похожих» под роликом, px (меньше число = больше карточек в ряду)
 
   const css = `
     html[dark] {
@@ -77,18 +78,21 @@
       padding: 4px 0 !important;
     }
 
-    /* похожие видео на странице ролика */
-    ytd-watch-flexy ytd-compact-video-renderer,
-    ytd-watch-flexy yt-lockup-view-model {
-      max-width: 380px !important;
+    /* похожие видео под роликом: сетка из мелких карточек */
+    ytd-watch-flexy ytd-watch-next-secondary-results-renderer ytd-item-section-renderer > #contents,
+    ytd-watch-flexy ytd-watch-next-secondary-results-renderer #items:has(> yt-lockup-view-model) {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fill, minmax(${RELATED_MIN_WIDTH}px, 1fr)) !important;
+      gap: 12px 10px !important;
     }
-    ytd-watch-flexy ytd-compact-video-renderer ytd-thumbnail,
-    ytd-watch-flexy yt-lockup-view-model .yt-lockup-view-model-wiz__content-image {
-      width: 140px !important;
-      min-width: 140px !important;
+    ytd-watch-flexy ytd-watch-next-secondary-results-renderer yt-lockup-view-model,
+    ytd-watch-flexy ytd-watch-next-secondary-results-renderer ytd-compact-video-renderer {
+      width: auto !important;
+      max-width: none !important;
+      margin: 0 !important;
     }
-    ytd-watch-flexy ytd-compact-video-renderer #video-title,
-    ytd-watch-flexy yt-lockup-view-model h3 {
+    ytd-watch-flexy ytd-watch-next-secondary-results-renderer yt-lockup-view-model h3,
+    ytd-watch-flexy ytd-watch-next-secondary-results-renderer #video-title {
       font-size: 13px !important;
       line-height: 1.3 !important;
     }
