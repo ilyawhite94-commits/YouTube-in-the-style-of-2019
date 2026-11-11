@@ -16,7 +16,7 @@
   const DEFAULTS = { items: 5, width: 1250 }; // значения по умолчанию
   const RELATED_MIN_WIDTH = 220;              // минимальная ширина карточки «похожих» под роликом, px
   const STORAGE_KEY = 'yt2019-settings';
-  const GEAR_BOTTOM = 120;                    // высота кнопки ⚙ от нижнего края окна, px (больше число = выше)
+  const GEAR_BOTTOM = 450;                    // высота кнопки ⚙ от нижнего края окна, px (больше число = выше)
 
   // ---------- настройки (запоминаются в браузере) ----------
   function num(v, min, max, def) {
