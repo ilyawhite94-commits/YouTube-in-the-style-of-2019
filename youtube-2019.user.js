@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube в стиле 2019
 // @namespace    https://github.com/ilyawhite94-commits
-// @version      1.6
+// @version      1.7
 // @description  Компактная главная YouTube: узкая колонка, мелкие заголовки, всегда открытая левая панель, ползунки числа видео и ширины ленты
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -16,6 +16,7 @@
   const DEFAULTS = { items: 5, width: 1250 }; // значения по умолчанию
   const RELATED_MIN_WIDTH = 220;              // минимальная ширина карточки «похожих» под роликом, px
   const STORAGE_KEY = 'yt2019-settings';
+  const GEAR_BOTTOM = 120;                    // высота кнопки ⚙ от нижнего края окна, px (больше число = выше)
 
   // ---------- настройки (запоминаются в браузере) ----------
   function num(v, min, max, def) {
@@ -135,7 +136,7 @@
     #yt2019-gear {
       position: fixed;
       right: 16px;
-      bottom: 16px;
+      bottom: ${GEAR_BOTTOM}px;
       z-index: 99999;
       width: 40px;
       height: 40px;
@@ -152,7 +153,7 @@
     #yt2019-panel {
       position: fixed;
       right: 16px;
-      bottom: 64px;
+      bottom: ${GEAR_BOTTOM + 48}px;
       z-index: 99999;
       width: 260px;
       padding: 14px 16px;
