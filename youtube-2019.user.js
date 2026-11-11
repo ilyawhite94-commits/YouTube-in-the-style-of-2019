@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube в стиле 2019
 // @namespace    https://github.com/ilyawhite94-commits
-// @version      1.5
+// @version      1.6
 // @description  Компактная главная YouTube: узкая колонка, мелкие заголовки, всегда открытая левая панель, ползунки числа видео и ширины ленты
 // @match        https://www.youtube.com/*
 // @grant        none
@@ -193,21 +193,28 @@
 
     const panel = document.createElement('div');
     panel.id = 'yt2019-panel';
-    panel.innerHTML = `
-      <label>Видео в ряду: <b id="yt2019-items-val"></b></label>
-      <input id="yt2019-items" type="range" min="2" max="10" step="1">
-      <label>Ширина ленты: <b id="yt2019-width-val"></b></label>
-      <input id="yt2019-width" type="range" min="600" max="2400" step="50">
-      <button id="yt2019-reset" type="button">Сбросить</button>
-    `;
+    // YouTube запрещает innerHTML (Trusted Types), поэтому собираем элементы вручную
+    function el(tag, props, children) {
+      const node = document.createElement(tag);
+      Object.assign(node, props || {});
+      (children || []).forEach((c) => node.append(c));
+      return node;
+    }
+    const itemsVal = el('b', { id: 'yt2019-items-val' });
+    const widthVal = el('b', { id: 'yt2019-width-val' });
+    const items = el('input', { id: 'yt2019-items', type: 'range', min: '2', max: '10', step: '1' });
+    const width = el('input', { id: 'yt2019-width', type: 'range', min: '600', max: '2400', step: '50' });
+    const resetBtn = el('button', { id: 'yt2019-reset', type: 'button', textContent: 'Сбросить' });
+    panel.append(
+      el('label', {}, ['Видео в ряду: ', itemsVal]),
+      items,
+      el('label', {}, ['Ширина ленты: ', widthVal]),
+      width,
+      resetBtn
+    );
 
     document.body.appendChild(panel);
     document.body.appendChild(gear);
-
-    const items = panel.querySelector('#yt2019-items');
-    const width = panel.querySelector('#yt2019-width');
-    const itemsVal = panel.querySelector('#yt2019-items-val');
-    const widthVal = panel.querySelector('#yt2019-width-val');
 
     function refresh() {
       items.value = settings.items;
@@ -227,7 +234,7 @@
 
     items.addEventListener('input', update);
     width.addEventListener('input', update);
-    panel.querySelector('#yt2019-reset').addEventListener('click', () => {
+    resetBtn.addEventListener('click', () => {
       settings.items = DEFAULTS.items;
       settings.width = DEFAULTS.width;
       refresh();
