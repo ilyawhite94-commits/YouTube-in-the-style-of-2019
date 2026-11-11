@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         YouTube в стиле 2019
 // @namespace    https://github.com/ilyawhite94-commits
-// @version      1.4
-// @description  Компактная главная YouTube: узкая колонка, мелкие заголовки, всегда открытая левая панель
+// @version      1.5
+// @description  Компактная главная YouTube: узкая колонка, мелкие заголовки, всегда открытая левая панель, ползунки числа видео и ширины ленты
 // @match        https://www.youtube.com/*
 // @grant        none
 // @run-at       document-start
@@ -13,10 +13,44 @@
 (function () {
   'use strict';
 
-  const ITEMS_PER_ROW = 5;       // сколько видео в ряду
-  const COLUMN_WIDTH = '1250px'; // ширина колонки ('none' = на весь экран)
-  const RELATED_MIN_WIDTH = 220; // минимальная ширина карточки «похожих» под роликом, px (меньше число = больше карточек в ряду)
+  const DEFAULTS = { items: 5, width: 1250 }; // значения по умолчанию
+  const RELATED_MIN_WIDTH = 220;              // минимальная ширина карточки «похожих» под роликом, px
+  const STORAGE_KEY = 'yt2019-settings';
 
+  // ---------- настройки (запоминаются в браузере) ----------
+  function num(v, min, max, def) {
+    v = Number(v);
+    return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : def;
+  }
+
+  function loadSettings() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      return {
+        items: num(saved.items, 2, 10, DEFAULTS.items),
+        width: num(saved.width, 600, 2400, DEFAULTS.width),
+      };
+    } catch (e) {
+      return { ...DEFAULTS };
+    }
+  }
+
+  function saveSettings(s) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+    } catch (e) { /* ничего страшного */ }
+  }
+
+  const settings = loadSettings();
+
+  function applySettings() {
+    const root = document.documentElement;
+    root.style.setProperty('--my-items-per-row', settings.items);
+    root.style.setProperty('--my-column-width', settings.width + 'px');
+  }
+  applySettings();
+
+  // ---------- стили ----------
   const css = `
     html[dark] {
       --my-page-bg: #121212;
@@ -36,9 +70,9 @@
     }
 
     ytd-browse[page-subtype="home"] ytd-rich-grid-renderer {
-      --ytd-rich-grid-items-per-row: ${ITEMS_PER_ROW} !important;
+      --ytd-rich-grid-items-per-row: var(--my-items-per-row, ${DEFAULTS.items}) !important;
       --ytd-rich-grid-item-margin: 6px !important;
-      max-width: ${COLUMN_WIDTH} !important;
+      max-width: var(--my-column-width, ${DEFAULTS.width}px) !important;
       margin: 0 auto !important;
       padding: 16px !important;
       background: var(--my-column-bg) !important;
@@ -96,13 +130,131 @@
       font-size: 13px !important;
       line-height: 1.3 !important;
     }
+
+    /* панель с ползунками */
+    #yt2019-gear {
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 99999;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--my-meta);
+      background: var(--my-column-bg);
+      color: var(--yt-spec-text-primary, #888);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 0.8;
+    }
+    #yt2019-gear:hover { opacity: 1; }
+    #yt2019-panel {
+      position: fixed;
+      right: 16px;
+      bottom: 64px;
+      z-index: 99999;
+      width: 260px;
+      padding: 14px 16px;
+      border: 1px solid var(--my-meta);
+      border-radius: 10px;
+      background: var(--my-column-bg);
+      color: var(--yt-spec-text-primary, #888);
+      font: 13px/1.4 Roboto, Arial, sans-serif;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      display: none;
+    }
+    #yt2019-panel.open { display: block; }
+    #yt2019-panel label { display: block; margin-bottom: 4px; }
+    #yt2019-panel input[type="range"] { width: 100%; margin: 0 0 14px; }
+    #yt2019-panel button {
+      padding: 4px 10px;
+      border: 1px solid var(--my-meta);
+      border-radius: 6px;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+    }
   `;
 
   const style = document.createElement('style');
   style.textContent = css;
   (document.head || document.documentElement).appendChild(style);
 
-  // Открываем левую панель, если она свёрнута (проверяем ~20 секунд после загрузки)
+  // ---------- панель с ползунками ----------
+  function buildPanel() {
+    if (document.getElementById('yt2019-gear')) return;
+
+    const gear = document.createElement('button');
+    gear.id = 'yt2019-gear';
+    gear.type = 'button';
+    gear.title = 'Настройки ленты';
+    gear.textContent = '⚙';
+
+    const panel = document.createElement('div');
+    panel.id = 'yt2019-panel';
+    panel.innerHTML = `
+      <label>Видео в ряду: <b id="yt2019-items-val"></b></label>
+      <input id="yt2019-items" type="range" min="2" max="10" step="1">
+      <label>Ширина ленты: <b id="yt2019-width-val"></b></label>
+      <input id="yt2019-width" type="range" min="600" max="2400" step="50">
+      <button id="yt2019-reset" type="button">Сбросить</button>
+    `;
+
+    document.body.appendChild(panel);
+    document.body.appendChild(gear);
+
+    const items = panel.querySelector('#yt2019-items');
+    const width = panel.querySelector('#yt2019-width');
+    const itemsVal = panel.querySelector('#yt2019-items-val');
+    const widthVal = panel.querySelector('#yt2019-width-val');
+
+    function refresh() {
+      items.value = settings.items;
+      width.value = settings.width;
+      itemsVal.textContent = settings.items;
+      widthVal.textContent = settings.width + ' px';
+    }
+
+    function update() {
+      settings.items = num(items.value, 2, 10, DEFAULTS.items);
+      settings.width = num(width.value, 600, 2400, DEFAULTS.width);
+      itemsVal.textContent = settings.items;
+      widthVal.textContent = settings.width + ' px';
+      applySettings();
+      saveSettings(settings);
+    }
+
+    items.addEventListener('input', update);
+    width.addEventListener('input', update);
+    panel.querySelector('#yt2019-reset').addEventListener('click', () => {
+      settings.items = DEFAULTS.items;
+      settings.width = DEFAULTS.width;
+      refresh();
+      applySettings();
+      saveSettings(settings);
+    });
+    gear.addEventListener('click', () => panel.classList.toggle('open'));
+
+    // ползунки нужны только на главной странице
+    function updateVisibility() {
+      const onHome = location.pathname === '/';
+      gear.style.display = onHome ? '' : 'none';
+      if (!onHome) panel.classList.remove('open');
+    }
+    window.addEventListener('yt-navigate-finish', updateVisibility);
+    updateVisibility();
+
+    refresh();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', buildPanel);
+  } else {
+    buildPanel();
+  }
+
+  // ---------- левая панель всегда открыта ----------
   let tries = 0;
   const timer = setInterval(() => {
     tries++;
